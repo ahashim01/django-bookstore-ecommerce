@@ -1,12 +1,12 @@
-from django.http import request
-from store.views import all_products
 from unittest import skip
 
 from django.contrib.auth.models import User
 from django.http.request import HttpRequest
-from django.test import Client, TestCase, RequestFactory
+from django.test import Client, RequestFactory, TestCase
 from django.urls.base import reverse
+
 from store.models import Category, Product
+from store.views import products_all
 
 
 class TestViewResponse(TestCase):
@@ -28,7 +28,9 @@ class TestViewResponse(TestCase):
         """
         Test allowed hosts
         """
-        response = self.client.get("/")
+        response = self.client.get("/", HTTP_HOST="noaddress.com")
+        self.assertEqual(response.status_code, 400)
+        response = self.client.get("/", HTTP_HOST="yourdomain.com")
         self.assertEqual(response.status_code, 200)
 
     def test_product_detail_url(self):
@@ -46,15 +48,15 @@ class TestViewResponse(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_homepage_html(self):
-        response = all_products(HttpRequest())
+        response = products_all(HttpRequest())
         html = response.content.decode("utf8")
         self.assertIn("<title>Home</title>", html)
         self.assertTrue(html.startswith("\n<!DOCTYPE html>\n"))
         self.assertEqual(response.status_code, 200)
 
     def test_view_function(self):
-        request = self.factory.get("/item/django-beginners")
-        response = all_products(request)
+        request = self.factory.get("/book/django-beginners")
+        response = products_all(request)
         html = response.content.decode("utf8")
         self.assertIn("<title>Home</title>", html)
         self.assertTrue(html.startswith("\n<!DOCTYPE html>\n"))
